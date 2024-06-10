@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Guess Number</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+    <script>
+      var app = angular.module("ng-guess", []);
+      app.service("guessService", function () {
+        this.randomResult = Math.floor(Math.random() * 101);
+        this.randomArray = createRamdomArray();
+        this.operationString = "( ) * + - /";
+        this.operationString = this.operationString.split(" ");
+
+        this.getRamdomResult = function () {
+          return this.randomResult;
+        };
+
+        this.getRamdomArray = function () {
+          return this.randomArray;
+        };
+
+        this.getOperationString = function () {
+          return this.operationString;
+        };
+        function createRamdomArray() {
+          var randomArray = [];
+          for (let index = 0; index < 5; index++) {
+            randomArray.push(Math.floor(Math.random() * 101));
+          }
+          return randomArray;
+        }
+      });
+
+      app.controller("board", function ($scope, guessService) {
+        $scope.randomResult = guessService.getRamdomResult();
+        $scope.randomArray = guessService.getRamdomArray();
+      });
+
+      app.controller("player_1", function ($scope, guessService) {
+        $scope.randomArray = guessService.getRamdomArray();
+        $scope.operationString = guessService.getOperationString();
+        $scope.playerResult = "";
+
+        $scope.append = function (value) {
+          $scope.playerResult += value;
+        };
+
+        $scope.clear = function () {
+            $scope.playerResult = "";
+        };
+
+        $scope.calculate = function() {
+            try{
+                $scope.playerResult = eval($scope.playerResult);
+            } catch (e){
+                $scope.playerResult = "Error";
+            }
+        };
+      });
+      app.controller("player_2", function ($scope, guessService) {
+        $scope.randomArray = guessService.getRamdomArray();
+        $scope.operationString = guessService.getOperationString();
+        $scope.playerResult = "";
+
+        $scope.append = function (value) {
+          $scope.playerResult += value;
+        };
+
+        $scope.clear = function () {
+            $scope.playerResult = "";
+        };
+
+        $scope.calculate = function() {
+            try{
+                $scope.playerResult = eval($scope.playerResult);
+            } catch (e){
+                $scope.playerResult = "Error";
+            }
+        };
+      });
+    </script>
+  </head>
+  <body ng-app="ng-guess">
+    <header ng-controller="board">
+      <h1 ng-model="randomResult">{{randomResult}}</h1>
+      <section ng-repeat="randomNumber in randomArray">
+        <span>{{randomNumber}}</span>
+      </section>
+    </header>
+    <article>
+      <section ng-controller="player_1">
+        <h1>Player 1</h1>
+        <input type="text" ng-model="playerResult" readonly />
+        <section>
+            <section ng-repeat="randomNumber in randomArray">
+                <button ng-click="append(randomNumber)">{{randomNumber}}</button>
+            </section>
+            <section ng-repeat="operationChar in operationString">
+                <button ng-click="append(operationChar)">{{operationChar}}</button>
+            </section>
+        </section>
+        <section>
+            <button ng-click="clear()">Clear</button>
+            <button ng-click="calculate()">Calculate</button>
+        </section>
+      </section>
+      <section ng-controller="player_2">
+        <h1>Player 2</h1>
+        <input type="text" ng-model="playerResult" readonly />
+        <section>
+            <section ng-repeat="randomNumber in randomArray">
+                <button ng-click="append(randomNumber)">{{randomNumber}}</button>
+            </section>
+            <section ng-repeat="operationChar in operationString">
+                <button ng-click="append(operationChar)">{{operationChar}}</button>
+            </section>
+        </section>
+        <section>
+            <button ng-click="clear()">Clear</button>
+            <button ng-click="calculate()">Calculate</button>
+        </section>
+      </section>
+    </article>
+  </body>
+</html>
