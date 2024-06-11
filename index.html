@@ -39,14 +39,15 @@
         $scope.randomArray = guessService.getRandomArray();
       });
 
-      app.controller("player_1", function ($scope, $interval, guessService) {
+      app.controller("player_1", function ($scope, $interval, guessService, $rootScope) {
         $scope.randomArray = guessService.getRandomArray();
         $scope.randomResult = guessService.getRandomResult();
         $scope.operationString = guessService.getOperationString();
         $scope.playerResult = "";
-        $scope.playerDifference;
+        $scope.playerDifference = null;
         $scope.useState = true;
         $scope.seconds = 30;
+        $scope.finished = false;
 
         $scope.append = function (value) {
           $scope.playerResult += value;
@@ -61,10 +62,18 @@
         };
 
         $scope.execute = function () {
-          $scope.toggleState();
-          $scope.calculate();
-          $scope.showDifference();
-          $interval.cancel(timer);
+          if (!$scope.finished) {
+            $scope.toggleState();
+            $scope.calculate();
+            $scope.showDifference();
+            $interval.cancel(timer);
+            $scope.finished = true;
+            $rootScope.player1Time = 30 - $scope.seconds;
+            $rootScope.player1Result = $scope.playerResult;
+            $rootScope.player1Difference = $scope.playerDifference;
+            $rootScope.player1Finished = true;
+            $scope.checkWinner();
+          }
         };
 
         $scope.calculate = function () {
@@ -76,7 +85,9 @@
         };
 
         $scope.showDifference = function () {
-          $scope.playerDifference = Math.abs($scope.playerResult - $scope.randomResult);
+          if ($scope.playerResult !== "Error") {
+            $scope.playerDifference = Math.abs($scope.playerResult - $scope.randomResult);
+          }
         };
 
         var timer = $interval(function() {
@@ -90,6 +101,114 @@
         $scope.$on('$destroy', function() {
           $interval.cancel(timer);
         });
+
+        $scope.checkWinner = function () {
+          if ($rootScope.player1Finished && $rootScope.player2Finished) {
+            if ($scope.playerResult == $scope.randomResult) {
+              alert("Player 1 wins with the exact result!");
+            } else if ($rootScope.player2Result == $scope.randomResult) {
+              alert("Player 2 wins with the exact result!");
+            } else if ($scope.playerDifference < $rootScope.player2Difference) {
+              alert("Player 1 wins by being closer!");
+            } else if ($scope.playerDifference > $rootScope.player2Difference) {
+              alert("Player 2 wins by being closer!");
+            } else {
+              if ($rootScope.player1Time < $rootScope.player2Time) {
+                alert("Player 1 wins by being faster!");
+              } else {
+                alert("Player 2 wins by being faster!");
+              }
+            }
+          }
+        };
+
+        $rootScope.player1Finished = false;
+      });
+
+      app.controller("player_2", function ($scope, $interval, guessService, $rootScope) {
+        $scope.randomArray = guessService.getRandomArray();
+        $scope.randomResult = guessService.getRandomResult();
+        $scope.operationString = guessService.getOperationString();
+        $scope.playerResult = "";
+        $scope.playerDifference = null;
+        $scope.useState = true;
+        $scope.seconds = 30;
+        $scope.finished = false;
+
+        $scope.append = function (value) {
+          $scope.playerResult += value;
+        };
+
+        $scope.clear = function () {
+          $scope.playerResult = "";
+        };
+
+        $scope.toggleState = function () {
+          $scope.useState = !$scope.useState;
+        };
+
+        $scope.execute = function () {
+          if (!$scope.finished) {
+            $scope.toggleState();
+            $scope.calculate();
+            $scope.showDifference();
+            $interval.cancel(timer);
+            $scope.finished = true;
+            $rootScope.player2Time = 30 - $scope.seconds;
+            $rootScope.player2Result = $scope.playerResult;
+            $rootScope.player2Difference = $scope.playerDifference;
+            $rootScope.player2Finished = true;
+            $scope.checkWinner();
+          }
+        };
+
+        $scope.calculate = function () {
+          try {
+            $scope.playerResult = eval($scope.playerResult);
+          } catch (e) {
+            $scope.playerResult = "Error";
+          }
+        };
+
+        $scope.showDifference = function () {
+          if ($scope.playerResult !== "Error") {
+            $scope.playerDifference = Math.abs($scope.playerResult - $scope.randomResult);
+          }
+        };
+
+        var timer = $interval(function() {
+          if ($scope.seconds > 0) {
+            $scope.seconds--;
+          } else {
+            $scope.execute();
+          }
+        }, 1000);
+
+        $scope.$on('$destroy', function() {
+          $interval.cancel(timer);
+        });
+
+        $scope.checkWinner = function () {
+          if ($rootScope.player1Finished && $rootScope.player2Finished) {
+            if ($scope.playerResult == $scope.randomResult) {
+              alert("Player 2 wins with the exact result!");
+            } else if ($rootScope.player1Result == $scope.randomResult) {
+              alert("Player 1 wins with the exact result!");
+            } else if ($scope.playerDifference < $rootScope.player1Difference) {
+              alert("Player 2 wins by being closer!");
+            } else if ($scope.playerDifference > $rootScope.player1Difference) {
+              alert("Player 1 wins by being closer!");
+            } else {
+              if ($rootScope.player2Time < $rootScope.player1Time) {
+                alert("Player 2 wins by being faster!");
+              } else {
+                alert("Player 1 wins by being faster!");
+              }
+            }
+          }
+        };
+
+        $rootScope.player2Finished = false;
       });
     </script>
   </head>
@@ -104,11 +223,43 @@
       <section ng-controller="player_1">
         <header>
             <h1>Player 1</h1>
-            <h2>{{seconds}}</h2>
+            <h2>{{seconds}} seconds left</h2>
         </header>
         <section>
             <section>
-                <label>Result</label>
+                <label ng-show="useState">Operation</label>
+                <label ng-show="!useState">Result</label>
+                <input type="text" ng-model="playerResult" readonly />
+            </section>
+            <section>
+                <label>this close</label>
+                <input type="text" ng-model="playerDifference" readonly />
+            </section>
+        </section>
+
+        <section>
+          <section ng-repeat="randomNumber in randomArray">
+            <button ng-click="append(randomNumber)">{{randomNumber}}</button>
+          </section>
+          <section ng-repeat="operationChar in operationString">
+            <button ng-click="append(operationChar)">{{operationChar}}</button>
+          </section>
+        </section>
+        <section>
+          <button ng-click="clear()">Clear</button>
+          <button ng-show="useState" ng-click="execute()">Calculate</button>
+        </section>
+      </section>
+
+      <section ng-controller="player_2">
+        <header>
+            <h1>Player 2</h1>
+            <h2>{{seconds}} seconds left</h2>
+        </header>
+        <section>
+            <section>
+                <label ng-show="useState">Operation</label>
+                <label ng-show="!useState">Result</label>
                 <input type="text" ng-model="playerResult" readonly />
             </section>
             <section>
