@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Guess Number</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.4/base.min.css"
+    />
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
     <script>
       var app = angular.module("ng-guess", []);
@@ -12,6 +17,7 @@
         this.randomResult = Math.floor(Math.random() * 101);
         this.randomArray = createRandomArray();
         this.operationString = "( ) * + - /".split(" ");
+        this.seconds= 120;
 
         this.getRandomResult = function () {
           return this.randomResult;
@@ -24,12 +30,10 @@
         this.getOperationString = function () {
           return this.operationString;
         };
-
-        function createRandomArray() {
-          var randomArray = [];
-          var randomNumber = null;
+        this.getSeconds = function() {
+          return this.seconds;
         }
-          function createRandomArray() {
+        function createRandomArray() {
           var randomArray = [];
           var randomNumber = null;
           for (let index = 0; index < 5; index++) {
@@ -54,11 +58,18 @@
           $scope.randomArray = guessService.getRandomArray();
           $scope.randomResult = guessService.getRandomResult();
           $scope.operationString = guessService.getOperationString();
+          $scope.playerGuess = null;
+          $scope.guessIsNull = true;
           $scope.playerResult = "";
           $scope.playerDifference = null;
           $scope.useState = true;
-          $scope.seconds = 30;
+          $scope.seconds = guessService.getSeconds();
           $scope.finished = false;
+
+          $scope.updateGuess = function () {
+            $scope.guessIsNull = !$scope.guessIsNull;
+            $scope.playerGuess = $scope.playerGuess;
+          };
 
           $scope.append = function (value) {
             $scope.playerResult += value;
@@ -83,6 +94,7 @@
               $rootScope.player1Result = $scope.playerResult;
               $rootScope.player1Difference = $scope.playerDifference;
               $rootScope.player1Finished = true;
+              $rootScope.player1Guess = $scope.playerGuess;
               $scope.checkWinner();
             }
           };
@@ -116,18 +128,21 @@
           });
 
           $scope.checkWinner = function () {
+            if ($rootScope.player1Finished) {
+              if ($scope.playerGuess == $scope.playerResult) {
+                if ($scope.playerResult == $scope.randomResult) {
+                  alert("Player 1 wins with the exact result!");
+                } else {
+                  alert("Player 1 is WRONG");
+                }
+              } else {
+                alert("Player 1 is incorrect");
+              }
+            }
             if ($rootScope.player1Finished && $rootScope.player2Finished) {
-              if ($scope.playerResult == $scope.randomResult) {
-                alert("Player 1 wins with the exact result!");
-              } else if ($rootScope.player2Result == $scope.randomResult) {
-                alert("Player 2 wins with the exact result!");
-              } else if (
-                $scope.playerDifference < $rootScope.player2Difference
-              ) {
+              if ($scope.playerDifference < $rootScope.player2Difference) {
                 alert("Player 1 wins by being closer!");
-              } else if (
-                $scope.playerDifference > $rootScope.player2Difference
-              ) {
+              } else if ($scope.playerDifference > $rootScope.player2Difference) {
                 alert("Player 2 wins by being closer!");
               } else {
                 if ($rootScope.player1Time < $rootScope.player2Time) {
@@ -149,12 +164,18 @@
           $scope.randomArray = guessService.getRandomArray();
           $scope.randomResult = guessService.getRandomResult();
           $scope.operationString = guessService.getOperationString();
+          $scope.playerGuess = null;
+          $scope.guessIsNull = true;
           $scope.playerResult = "";
           $scope.playerDifference = null;
           $scope.useState = true;
-          $scope.seconds = 30;
+          $scope.seconds = guessService.getSeconds();
           $scope.finished = false;
 
+          $scope.updateGuess = function () {
+            $scope.guessIsNull = !$scope.guessIsNull;
+            $scope.playerGuess = $scope.playerGuess;
+          };
           $scope.append = function (value) {
             $scope.playerResult += value;
           };
@@ -211,18 +232,21 @@
           });
 
           $scope.checkWinner = function () {
+            if ($scope.player2Difference) {
+              if ($scope.playerGuess == $scope.playerResult) {
+                if ($scope.playerResult == $scope.randomResult) {
+                  alert("Player 2 wins with the exact result!");
+                } else {
+                  alert("Player 2 is WRONG");
+                }
+              } else {
+                alert("Player 2 is incorrect");
+              }
+            }
             if ($rootScope.player1Finished && $rootScope.player2Finished) {
-              if ($scope.playerResult == $scope.randomResult) {
-                alert("Player 2 wins with the exact result!");
-              } else if ($rootScope.player1Result == $scope.randomResult) {
-                alert("Player 1 wins with the exact result!");
-              } else if (
-                $scope.playerDifference < $rootScope.player1Difference
-              ) {
+              if ($scope.playerDifference < $rootScope.player1Difference) {
                 alert("Player 2 wins by being closer!");
-              } else if (
-                $scope.playerDifference > $rootScope.player1Difference
-              ) {
+              } else if ($scope.playerDifference > $rootScope.player1Difference) {
                 alert("Player 1 wins by being closer!");
               } else {
                 if ($rootScope.player2Time < $rootScope.player1Time) {
@@ -239,74 +263,92 @@
       );
     </script>
   </head>
-  <body ng-app="ng-guess">
-    <header ng-controller="board">
-      <h1>{{randomResult}}</h1>
-      <section ng-repeat="randomNumber in randomArray">
-        <span>{{randomNumber}}</span>
+  <body class="flex flex-col items-center bg-gray-100 min-h-screen p-4" ng-app="ng-guess">
+    <header ng-controller="board" class="mb-8">
+      <h1 class="text-4xl font-bold mb-4">Random Result: {{randomResult}}</h1>
+      <section class="flex flex-row gap-4">
+        <span ng-repeat="randomNumber in randomArray" class="bg-white p-2 rounded shadow">
+          {{randomNumber}}
+        </span>
       </section>
     </header>
-    <article>
-      <section ng-controller="player_1">
-        <header>
-          <h1>Player 1</h1>
-          <h2>{{seconds}} seconds left</h2>
+    <article class="flex flex-col items-center space-y-8">
+      <section ng-controller="player_1" class="bg-white p-6 rounded shadow w-full max-w-lg">
+        <header class="mb-4">
+          <h1 class="text-2xl font-bold mb-2">Player 1</h1>
+          <h2 class="text-lg mb-2">{{seconds}} seconds left</h2>
+          <h3 ng-show="!guessIsNull" ng-model="playerGuess">Your guess: {{playerGuess}}</h3>
         </header>
-        <section>
-          <section>
-            <label ng-show="useState">Operation</label>
-            <label ng-show="!useState">Result</label>
-            <input type="text" ng-model="playerResult" readonly />
+        <article ng-show="guessIsNull" class="mb-4">
+          <label class="block mb-2">Your guess</label>
+          <input type="number" ng-model="playerGuess" class="border p-2 rounded w-full mb-2"/>
+          <button ng-click="updateGuess()" class="bg-blue-500 text-white p-2 rounded">Guess</button>
+        </article>
+        <article ng-show="!guessIsNull">
+          <section class="mb-4">
+            <section class="mb-2">
+              <label ng-show="useState" class="block mb-1">Operation</label>
+              <label ng-show="!useState" class="block mb-1">Result</label>
+              <input type="text" ng-model="playerResult" readonly class="border p-2 rounded w-full"/>
+            </section>
+            <section class="mb-2">
+              <label class="block mb-1">This close</label>
+              <input type="text" ng-model="playerDifference" readonly class="border p-2 rounded w-full"/>
+            </section>
           </section>
-          <section>
-            <label>this close</label>
-            <input type="text" ng-model="playerDifference" readonly />
+  
+          <section class="grid grid-cols-5 gap-2 mb-4">
+            <section ng-repeat="randomNumber in randomArray">
+              <button ng-click="append(randomNumber)" class="bg-gray-200 p-2 rounded">{{randomNumber}}</button>
+            </section>
+            <section ng-repeat="operationChar in operationString">
+              <button ng-click="append(operationChar)" class="bg-gray-200 p-2 rounded">{{operationChar}}</button>
+            </section>
           </section>
-        </section>
-
-        <section>
-          <section ng-repeat="randomNumber in randomArray">
-            <button ng-click="append(randomNumber)">{{randomNumber}}</button>
+          <section class="flex space-x-4">
+            <button ng-click="clear()" class="bg-red-500 text-white p-2 rounded">Clear</button>
+            <button ng-show="useState" ng-click="execute()" class="bg-green-500 text-white p-2 rounded">Calculate</button>
           </section>
-          <section ng-repeat="operationChar in operationString">
-            <button ng-click="append(operationChar)">{{operationChar}}</button>
-          </section>
-        </section>
-        <section>
-          <button ng-click="clear()">Clear</button>
-          <button ng-show="useState" ng-click="execute()">Calculate</button>
-        </section>
+        </article>
       </section>
 
-      <section ng-controller="player_2">
-        <header>
-          <h1>Player 2</h1>
-          <h2>{{seconds}} seconds left</h2>
+      <section ng-controller="player_2" class="bg-white p-6 rounded shadow w-full max-w-lg">
+        <header class="mb-4">
+          <h1 class="text-2xl font-bold mb-2">Player 2</h1>
+          <h2 class="text-lg mb-2">{{seconds}} seconds left</h2>
+          <h3 ng-show="!guessIsNull" ng-model="playerGuess">Your guess: {{playerGuess}}</h3>
         </header>
-        <section>
-          <section>
-            <label ng-show="useState">Operation</label>
-            <label ng-show="!useState">Result</label>
-            <input type="text" ng-model="playerResult" readonly />
+        <article ng-show="guessIsNull" class="mb-4">
+          <label class="block mb-2">Your guess</label>
+          <input type="number" ng-model="playerGuess" class="border p-2 rounded w-full mb-2"/>
+          <button ng-click="updateGuess()" class="bg-blue-500 text-white p-2 rounded">Guess</button>
+        </article>
+        <article ng-show="!guessIsNull">
+          <section class="mb-4">
+            <section class="mb-2">
+              <label ng-show="useState" class="block mb-1">Operation</label>
+              <label ng-show="!useState" class="block mb-1">Result</label>
+              <input type="text" ng-model="playerResult" readonly class="border p-2 rounded w-full"/>
+            </section>
+            <section class="mb-2">
+              <label class="block mb-1">This close</label>
+              <input type="text" ng-model="playerDifference" readonly class="border p-2 rounded w-full"/>
+            </section>
           </section>
-          <section>
-            <label>this close</label>
-            <input type="text" ng-model="playerDifference" readonly />
+  
+          <section class="grid grid-cols-5 gap-2 mb-4">
+            <section ng-repeat="randomNumber in randomArray">
+              <button ng-click="append(randomNumber)" class="bg-gray-200 p-2 rounded">{{randomNumber}}</button>
+            </section>
+            <section ng-repeat="operationChar in operationString">
+              <button ng-click="append(operationChar)" class="bg-gray-200 p-2 rounded">{{operationChar}}</button>
+            </section>
           </section>
-        </section>
-
-        <section>
-          <section ng-repeat="randomNumber in randomArray">
-            <button ng-click="append(randomNumber)">{{randomNumber}}</button>
+          <section class="flex space-x-4">
+            <button ng-click="clear()" class="bg-red-500 text-white p-2 rounded">Clear</button>
+            <button ng-show="useState" ng-click="execute()" class="bg-green-500 text-white p-2 rounded">Calculate</button>
           </section>
-          <section ng-repeat="operationChar in operationString">
-            <button ng-click="append(operationChar)">{{operationChar}}</button>
-          </section>
-        </section>
-        <section>
-          <button ng-click="clear()">Clear</button>
-          <button ng-show="useState" ng-click="execute()">Calculate</button>
-        </section>
+        </article>
       </section>
     </article>
   </body>
